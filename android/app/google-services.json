@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "937702073916",
+    "project_id": "starlight-c576f",
+    "storage_bucket": "starlight-c576f.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:937702073916:android:a88a4d53ce3c000fea8539",
+        "android_client_info": {
+          "package_name": "com.example.starlight"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDD-fPWYtgZKlaZZr1f_ONr68no4jvfyms"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
