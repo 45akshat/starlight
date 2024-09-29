@@ -1,7 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:starlight/FrontScreen.dart';
+import 'package:starlight/HomePage.dart';
+import 'package:starlight/PinScreen.dart';
 import 'package:starlight/login.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:starlight/set_pin.dart';
+import 'firebase_options.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
   runApp(const MyApp());
 }
 
