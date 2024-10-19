@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:chewie/chewie.dart';
+// import 'package:chewie/chewie.dart';
 import 'package:video_player/video_player.dart';
 
 class ViewStream extends StatefulWidget {
@@ -9,7 +9,7 @@ class ViewStream extends StatefulWidget {
 
 class _ViewStreamState extends State<ViewStream> {
   late VideoPlayerController _videoPlayerController;
-  late ChewieController _chewieController;
+  // late ChewieController _chewieController;
 
   @override
   void initState() {
@@ -18,25 +18,25 @@ class _ViewStreamState extends State<ViewStream> {
       'https://video.wixstatic.com/video/11062b_20125b6ebe434abd96c4d7773634d1db/480p/mp4/file.mp4?fileUsed=false',
     );
 
-    _chewieController = ChewieController(
-      aspectRatio: 16/9,
-      videoPlayerController: _videoPlayerController,
-      autoPlay: true,
-      looping: true,
-      showControls: true,
-      showControlsOnInitialize: true,
-      materialProgressColors: ChewieProgressColors(
-        playedColor: Color.fromARGB(255, 113, 214, 18),
-        handleColor: Color.fromARGB(255, 101, 196, 12),
-        backgroundColor: Colors.grey,
-        bufferedColor: const Color.fromARGB(255, 174, 174, 174),
-      ),
-    );
+    // _chewieController = ChewieController(
+    //   aspectRatio: 16/9,
+    //   videoPlayerController: _videoPlayerController,
+    //   autoPlay: true,
+    //   looping: true,
+    //   showControls: true,
+    //   showControlsOnInitialize: true,
+    //   materialProgressColors: ChewieProgressColors(
+    //     playedColor: Color.fromARGB(255, 113, 214, 18),
+    //     handleColor: Color.fromARGB(255, 101, 196, 12),
+    //     backgroundColor: Colors.grey,
+    //     bufferedColor: const Color.fromARGB(255, 174, 174, 174),
+    //   ),
+    // );
   }
 
   @override
   void dispose() {
-    _chewieController.dispose();
+    // _chewieController.dispose();
     _videoPlayerController.dispose();
     super.dispose();
   }
@@ -52,9 +52,9 @@ class _ViewStreamState extends State<ViewStream> {
             
             width: double.infinity, // Full width
             height: 300, // Set your desired height here
-            child: Chewie(
-              controller: _chewieController,
-            ),
+            // child: Chewie(
+            //   controller: _chewieController,
+            // ),
           ),
           // Movie Details (Title, Genre, Description)
           Padding(

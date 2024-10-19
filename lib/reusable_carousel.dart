@@ -3,6 +3,8 @@ import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 
+import 'ShowDetailScreen.dart';
+
 class CustomCarouselSlider extends StatelessWidget {
   final double aspectRatio;
   final List<Map<String, dynamic>> imgList;
@@ -15,7 +17,17 @@ class CustomCarouselSlider extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final List<Widget> imageSliders = imgList
-        .map((item) => Container(
+        .map((item) => GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) =>
+                      ShowDetailScreen(showId: item['show_id'] ?? '',title: item['title']??'',),
+                ),
+              );
+            },
+            child: Container(
               margin: EdgeInsets.all(0.0),
               child: Stack(
                 children: <Widget>[
@@ -28,36 +40,9 @@ class CustomCarouselSlider extends StatelessWidget {
                       height: 1000,
                     ),
                   )),
-                  // Positioned(
-                  //   bottom: 20.0,
-                  //   left: 20.0,
-                  //   right: 0.0,
-                  //   child: Container(
-                  //     padding: EdgeInsets.symmetric(vertical: 0, horizontal: 0),
-                  //     child: SizedBox(
-                  //       height: 40,  // Set the height here
-                  //       width: 100,  // Set the width here
-                  //       child: ElevatedButton(
-                  //         onPressed: () {},
-                  //         child: Text('Watch Now'),
-                  //         style: ButtonStyle(
-                  //           backgroundColor: MaterialStateProperty.all(Colors.blueAccent),
-                  //           shape: MaterialStateProperty.all(
-                  //             RoundedRectangleBorder(
-                  //               borderRadius: BorderRadius.circular(16),
-                  //             ),
-                  //           ),
-                  //           minimumSize: MaterialStateProperty.all(Size(100, 40)), // Set the minimum size to ensure width
-                  //         ),
-                  //       ),
-                  //     ),
-                  //   )
-                  //
-                  //
-                  // ),
                 ],
               ),
-            ))
+            )))
         .toList();
     return CarouselSlider(
       options: CarouselOptions(

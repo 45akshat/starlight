@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:starlight/kidsParentsOptionScreen.dart';
 import 'HomePage.dart';
+import 'login.dart';
+import 'main.dart';
 import 'services/database.dart';
 
 
@@ -11,18 +14,21 @@ class PinEntryScreen extends StatefulWidget {
 
 
 class _PinEntryScreenState extends State<PinEntryScreen> {
-  String phonenumber = '9022559233';
   String pinstore = '0';
   final DatabaseService _databaseService =
   DatabaseService();
 
-  Future<void> funcc() async{
+  void funcc() async{
     final data =  await _databaseService.findDocumentByPhoneNum(
-        'users', phonenumber);
+        'users', phoneNumber);
     print(data?['phoneNum']);
     pinstore = data?['pin'];
   }
 
+
+  void getStoredPhoneNumber() async {
+    phoneNumber = await secureStorage.read(key: 'phone_number')??'';
+  }
 
 
   @override
@@ -30,6 +36,7 @@ class _PinEntryScreenState extends State<PinEntryScreen> {
     // final data =  _databaseService.findDocumentByPhoneNum(
     //     'users', phonenumber);
     //  print('#############${data[0]['phoneNum']}');
+    getStoredPhoneNumber();
     funcc();
 
     super.initState();
@@ -39,9 +46,10 @@ class _PinEntryScreenState extends State<PinEntryScreen> {
   void _submitPin() {
     String pin = _pinController.text;
     if (_pinController.text == pinstore) {
-      Navigator.push(
+      Navigator.pushAndRemoveUntil(
         context,
-        MaterialPageRoute(builder: (context) => homepage()),
+        MaterialPageRoute(builder: (context) => KidsParentsOption()),
+        ModalRoute.withName('/'),
       );
     } else {
       // Show error message or handle incomplete PIN
@@ -63,7 +71,7 @@ class _PinEntryScreenState extends State<PinEntryScreen> {
               children: [
                 // Title
                 Text(
-                  'Set Your PIN',
+                  'Enter Your PIN',
                   style: TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
@@ -72,7 +80,7 @@ class _PinEntryScreenState extends State<PinEntryScreen> {
                 ),
                 SizedBox(height: 10),
                 Text(
-                  'Enter a 4-digit PIN to secure your account',
+                  'Enter your 4 digit pin',
                   style: TextStyle(
                     fontSize: 14,
                     color: Colors.grey[400], // Lighter grey for readability

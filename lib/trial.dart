@@ -1,267 +1,568 @@
-import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:starlight/AllShows.dart';
-import 'reusable_carousel.dart';
-import 'package:intl/intl.dart';
-
-class FirstScreen extends StatefulWidget {
-  const FirstScreen({Key? key}) : super(key: key);
-
-  @override
-  _FirstScreenState createState() => _FirstScreenState();
-}
-
-class _FirstScreenState extends State<FirstScreen> {
-  String selectedCategory = 'Most Watched'; // Default selected category
-
-  Future<List<Map<String, dynamic>>> _fetchShowsFromFirestore() async {
-    final DocumentSnapshot<Map<String, dynamic>> snapshot =
-    await FirebaseFirestore.instance.collection('HomePage').doc('AllShows').get();
-
-    if (snapshot.exists && snapshot.data() != null) {
-      List<dynamic> dynamicShows = snapshot.data()?['shows'] ?? [];
-      List<Map<String, dynamic>> shows = dynamicShows.map((show) {
-        return Map<String, dynamic>.from(show);
-      }).toList();
-      return shows;
-    } else {
-      return [{
-        'category': "Mystery",
-        'date': "2024-01-02",
-        'img_link': "https://via.placeholder.com/150x200?text=Show+2",
-        'ranking': 7.5,
-        'stream_id': "202",
-        'title': "Mystery of the Lost City"
-      }];
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      extendBodyBehindAppBar: true,
-      backgroundColor: Colors.black,
-      appBar: AppBar(
-        flexibleSpace: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [
-                Colors.black.withOpacity(1),
-                Colors.black.withOpacity(0.8),
-                Colors.black.withOpacity(0.6),
-                Colors.black.withOpacity(0),
-              ],
-            ),
-          ),
-        ),
-        backgroundColor: Colors.black.withOpacity(0),
-        title: const Text(
-          'Starlight',
-          style: TextStyle(color: Colors.white, fontSize: 30, fontWeight: FontWeight.w300),
-        ),
-        centerTitle: false,
-      ),
-      body: FutureBuilder<List<Map<String, dynamic>>>(
-        future: _fetchShowsFromFirestore(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator(color: Colors.white));
-          } else if (snapshot.hasError) {
-            return const Center(child: Text('Error fetching data', style: TextStyle(color: Colors.white)));
-          } else if (snapshot.connectionState == ConnectionState.done) {
-            if (!snapshot.hasData || snapshot.data!.isEmpty) {
-              return const Center(child: Text('No shows available', style: TextStyle(color: Colors.white)));
-            }
-
-            final shows = snapshot.data!;
-
-            return SingleChildScrollView(
-              child: Padding(
-                padding: const EdgeInsets.all(0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-
-                    // Custom Carousel Slider
-                    CustomCarouselSlider(
-                      aspectRatio: 0.7,
-                      imgList: shows.map((show) => {
-                        "image_url": show["img_link"],
-                        "show_id": show["stream_id"],
-                        "date": show["date"]
-                      }).toList(),
-                    ),
-
-                    const SizedBox(height: 30),
-                    // Section with category buttons
-
-
-                    const SizedBox(height: 30),
-
-                    // Display selected category list
-                    Padding(
-                      padding: const EdgeInsets.all(15.0),
-                      child: Text(
-                        '$selectedCategory Shows',
-                        style: const TextStyle(fontSize: 25, color: Colors.white),
-                      ),
-                    ),
-                    _buildHorizontalListView(shows),
-
-                    const SizedBox(height: 30),
-                    _buildCategoryButtons(),
-
-                    // Continue Watching section
-                    const Padding(
-                      padding: EdgeInsets.all(15.0),
-                      child: Text('Continue Watching', style: TextStyle(fontSize: 25, color: Colors.white)),
-                    ),
-                    _buildHorizontalListView(shows.sublist(0, 3)),
-
-                    const SizedBox(height: 30),
-
-                    // All Shows section
-                    Padding(
-                      padding: const EdgeInsets.all(15.0),
-                      child: Row(
-                        children: [
-                          const Text('All Shows', style: TextStyle(fontSize: 25, color: Colors.white)),
-                          IconButton(
-                            onPressed: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(builder: (context) => ShowGridScreen()),
-                              );
-                            },
-                            icon: const Icon(Icons.arrow_forward_ios_outlined),
-                            color: Colors.white,
-                          ),
-                        ],
-                      ),
-                    ),
-                    _buildHorizontalListView(shows),
-
-                    const SizedBox(height: 30),
-
-                    // Newly Added section
-                    const Padding(
-                      padding: EdgeInsets.all(15.0),
-                      child: Text('Newly Added', style: TextStyle(fontSize: 25, color: Colors.white)),
-                    ),
-                    AllShowsListView(shows),
-                  ],
-                ),
-              ),
-            );
-          }
-
-          return Container();
-        },
-      ),
-    );
-  }
-
-  // Category buttons
-  Widget _buildCategoryButtons() {
-    return Padding(
-      padding: const EdgeInsets.all(15.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          _buildCategoryButton('Most Watched'),
-          _buildCategoryButton('Recently Added'),
-          _buildCategoryButton('Best Rated'),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildCategoryButton(String text) {
-    return ElevatedButton(
-      onPressed: () {
-        // Update the state when a category is selected
-        setState(() {
-          selectedCategory = text;
-        });
-      },
-      style: ElevatedButton.styleFrom(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
-        backgroundColor: selectedCategory == text ? Colors.blueAccent : Colors.grey,
-      ),
-      child: Text(
-        text,
-        style: const TextStyle(color: Colors.white),
-      ),
-    );
-  }
-
-  Widget _buildHorizontalListView(List<Map<String, dynamic>> movieData) {
-    return SizedBox(
-      height: 250,
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        itemCount: movieData.length,
-        itemBuilder: (context, index) {
-          final movie = movieData[index];
-          return Padding(
-            padding: const EdgeInsets.only(right: 10.0),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(10.0),
-              child: Image.network(
-                movie["img_link"] ?? '',
-                width: 170,
-                fit: BoxFit.cover,
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
-}
-
-Widget AllShowsListView(List<Map<String, dynamic>> movieData) {
-  movieData.sort((a, b) {
-    DateTime dateA = DateFormat('yyyy-MM-dd').parse(a['date'] ?? '');
-    DateTime dateB = DateFormat('yyyy-MM-dd').parse(b['date'] ?? '');
-    return dateB.compareTo(dateA);
-  });
-
-  return SizedBox(
-    height: 300,
-    child: ListView.builder(
-      scrollDirection: Axis.horizontal,
-      itemCount: movieData.length,
-      itemBuilder: (context, index) {
-        final movie = movieData[index];
-        return Padding(
-          padding: const EdgeInsets.only(right: 10.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(10),
-                child: Image.network(
-                  movie["img_link"] ?? '',
-                  width: 170,
-                  height: 250,
-                  fit: BoxFit.cover,
-                ),
-              ),
-              const SizedBox(height: 5),
-              Text(
-                movie["date"] ?? '',
-                style: const TextStyle(fontSize: 12, color: Colors.white70),
-              ),
-            ],
-          ),
-        );
-      },
-    ),
-  );
-}
+// // import 'package:flutter/material.dart';
+// // import 'package:flutter/services.dart';
+// //
+// // class LoginPage extends StatefulWidget {
+// //   @override
+// //   _LoginPageState createState() => _LoginPageState();
+// // }
+// //
+// // class _LoginPageState extends State<LoginPage> {
+// //   final TextEditingController phoneController = TextEditingController();
+// //   final TextEditingController otpController = TextEditingController();
+// //
+// //   final _formKey = GlobalKey<FormState>(); // Form key for validation
+// //
+// //   // Track whether OTP field should be shown
+// //   bool isOtpFieldVisible = false;
+// //
+// //   @override
+// //   Widget build(BuildContext context) {
+// //     return Scaffold(
+// //       backgroundColor: Colors.white,
+// //       body: SingleChildScrollView(
+// //         child: Padding(
+// //           padding: const EdgeInsets.symmetric(horizontal: 20.0),
+// //           child: Form(
+// //             key: _formKey, // Form widget for validation
+// //             child: Column(
+// //               mainAxisAlignment: MainAxisAlignment.center,
+// //               crossAxisAlignment:
+// //                   CrossAxisAlignment.start, // Align items to the left
+// //               children: [
+// //                 SizedBox(height: 80), // Adjusted space from the top
+// //                 Center(
+// //                   child: Image.asset(
+// //                     'assets/img/hello.png',
+// //                     height: 300, // Adjusted image height
+// //                   ),
+// //                 ),
+// //                 SizedBox(height: 30),
+// //                Column(
+// //   crossAxisAlignment: CrossAxisAlignment.start, // Align text to the left
+// //   children: [
+// //     Text(
+// //       isOtpFieldVisible ? 'Enter OTP' : 'Login', // Change text based on OTP visibility
+// //       style: TextStyle(
+// //         fontSize: 30, // Adjusted font size
+// //         fontWeight: FontWeight.bold,
+// //         color: Colors.black,
+// //       ),
+// //     ),
+// //     SizedBox(height: 10),
+// //     if (!isOtpFieldVisible)
+// //       Text(
+// //         'Enter your phone number and you will receive an OTP to get started!',
+// //         style: TextStyle(
+// //           fontSize: 14, // Smaller font size
+// //           color: Colors.grey[600],
+// //         ),
+// //       ),
+// //     if (isOtpFieldVisible)
+// //       Row(
+// //         mainAxisAlignment: MainAxisAlignment.spaceBetween,
+// //         children: [
+// //           Expanded(
+// //             child: Text(
+// //               'A 6 digit code has been sent to \n +91 ${phoneController.text}',
+// //               style: TextStyle(
+// //                 fontSize: 14, // Slightly smaller font size
+// //                 color: Colors.grey[600],
+// //               ),
+// //             ),
+// //           ),
+// //           GestureDetector(
+// //             onTap: () {
+// //               setState(() {
+// //                 isOtpFieldVisible = false; // Allow editing the phone number
+// //                 phoneController.clear(); // Clear the phone number for re-entry
+// //               });
+// //             },
+// //             child: Icon(Icons.edit, color: const Color.fromARGB(255, 5, 90, 237)),
+// //           ),
+// //         ],
+// //       ),
+// //     SizedBox(height: 30),
+// //     if (!isOtpFieldVisible) _buildPhoneNumberField(),
+// //     SizedBox(height: 5),
+// //     if (isOtpFieldVisible) _buildOTPField(),
+// //     if (isOtpFieldVisible) SizedBox(height: 5),
+// //   ],
+// // ),
+// //
+// //                 SizedBox(height: 5),
+// //                 _buildActionButton(),
+// //               ],
+// //             ),
+// //           ),
+// //         ),
+// //       ),
+// //     );
+// //   }
+// //
+// //   Widget _buildPhoneNumberField() {
+// //     return TextFormField(
+// //       controller: phoneController,
+// //       keyboardType: TextInputType.phone,
+// //       style: TextStyle(fontSize: 14), // Slightly smaller font size for input
+// //       inputFormatters: [
+// //         LengthLimitingTextInputFormatter(10),
+// //         FilteringTextInputFormatter.digitsOnly,
+// //       ],
+// //       decoration: InputDecoration(
+// //         prefixText: '+91  ',
+// //         prefixStyle: TextStyle(color: Colors.black, fontSize: 14),
+// //         hintText: 'Phone Number',
+// //         hintStyle: TextStyle(
+// //           color: Colors.grey[500],
+// //           fontSize: 14,
+// //         ),
+// //         filled: true,
+// //         fillColor: Colors.grey[100],
+// //         prefixIcon: Icon(
+// //           Icons.phone,
+// //           color: Colors.black,
+// //           size: 18,
+// //         ),
+// //         border: OutlineInputBorder(
+// //           borderRadius: BorderRadius.circular(10),
+// //           borderSide: BorderSide.none,
+// //         ),
+// //         contentPadding: EdgeInsets.symmetric(vertical: 18, horizontal: 20),
+// //       ),
+// //       validator: (value) {
+// //         if (value == null || value.isEmpty) {
+// //           return 'Please enter your phone number';
+// //         } else if (value.length != 10) {
+// //           return 'Phone number must be exactly 10 digits';
+// //         }
+// //         return null;
+// //       },
+// //     );
+// //   }
+// //
+// //   Widget _buildOTPField() {
+// //     return TextFormField(
+// //       controller: otpController,
+// //       keyboardType: TextInputType.number,
+// //       inputFormatters: [
+// //         LengthLimitingTextInputFormatter(6),
+// //         FilteringTextInputFormatter.digitsOnly,
+// //       ],
+// //       style: TextStyle(fontSize: 14), // Smaller font size
+// //       decoration: InputDecoration(
+// //         hintText: 'OTP',
+// //         hintStyle: TextStyle(
+// //           color: Colors.grey[500],
+// //           fontSize: 14,
+// //         ),
+// //         filled: true,
+// //         fillColor: Colors.grey[100],
+// //         prefixIcon: Icon(
+// //           Icons.lock,
+// //           color: Colors.black,
+// //           size: 18,
+// //         ),
+// //         border: OutlineInputBorder(
+// //           borderRadius: BorderRadius.circular(10),
+// //           borderSide: BorderSide.none,
+// //         ),
+// //         contentPadding: EdgeInsets.symmetric(vertical: 18, horizontal: 20),
+// //       ),
+// //       validator: (value) {
+// //         if (value == null || value.isEmpty) {
+// //           return 'Please enter the OTP';
+// //         } else if (value.length != 6) {
+// //           return 'OTP must be exactly 6 digits';
+// //         }
+// //         return null;
+// //       },
+// //     );
+// //   }
+// //
+// //   Widget _buildActionButton() {
+// //     return SizedBox(
+// //       width: double.infinity, // Button takes full width
+// //       child: ElevatedButton(
+// //         onPressed: () {
+// //           if (_formKey.currentState!.validate()) {
+// //             if (!isOtpFieldVisible) {
+// //               // Logic to send OTP
+// //               setState(() {
+// //                 isOtpFieldVisible = true;
+// //               });
+// //             } else {
+// //               // Logic to verify OTP and proceed to login
+// //             }
+// //           }
+// //         },
+// //         style: ElevatedButton.styleFrom(
+// //           foregroundColor: Colors.white,
+// //           backgroundColor: const Color.fromARGB(255, 5, 90, 237),
+// //           padding: EdgeInsets.symmetric(vertical: 14),
+// //           shape: RoundedRectangleBorder(
+// //             borderRadius: BorderRadius.circular(10),
+// //           ),
+// //         ),
+// //         child: Text(
+// //           isOtpFieldVisible ? 'Verify OTP' : 'Send OTP',
+// //           style: TextStyle(
+// //             fontSize: 14, // Slightly smaller font size for button text
+// //             fontWeight: FontWeight.w500,
+// //           ),
+// //         ),
+// //       ),
+// //     );
+// //   }
+// // }
+//
+// import 'package:flutter/material.dart';
+// import 'package:flutter/services.dart';
+// import 'package:starlight/services/database.dart';
+// import 'package:starlight/set_pin.dart';
+// import 'package:http/http.dart' as http;
+// import 'dart:convert'; // For converting JSON data
+// import 'dart:math';
+//
+// class LoginPage1 extends StatefulWidget {
+//   @override
+//   _LoginPage1State createState() => _LoginPage1State();
+// }
+//
+// class _LoginPage1State extends State<LoginPage1> {
+//   final TextEditingController phoneController = TextEditingController();
+//   final TextEditingController otpController = TextEditingController();
+//
+//   final _formKey = GlobalKey<FormState>(); // Form key for validation
+//   final DatabaseService _databaseService = DatabaseService();
+//
+//   bool isOtpFieldVisible = false;
+//   String? pinstore;
+//   late String generatedotp ;
+//
+//   Future<bool> sendOtp(String phoneNumber,String otp) async {
+//     // Replace with your API URL and parameters
+//     const String apiUrl1 =
+//         'https://www.fast2sms.com/dev/bulkV2?authorization=1XT6J9q2yWorcfD8xBdei7e7X2DYaO36DzRm4QSKoQ9PTZI5EIdBX33NENHd&route=otp&variables_values=';
+//     const String apiUrl2 = '&flash=0&numbers=';
+//     // Add your query parameters (example: phoneNumber, apiKey, etc.)
+//     final Uri url = Uri.parse(
+//         '$apiUrl1$otp$apiUrl2$phoneNumber'); // Example OTP, generate dynamically as needed
+//
+//     try {
+//       // Send the HTTP GET request
+//       final response = await http.get(url);
+//
+//       if (response.statusCode == 200) {
+//         // Parse the response if necessary
+//         final Map<String, dynamic> responseData = json.decode(response.body);
+//
+//         // Handle response (Assuming your API returns success or status)
+//         if (responseData['status'] == 'success') {
+//           print('OTP sent successfully!');
+//           return true;
+//         } else {
+//           print('Failed to send OTP');
+//           return false;
+//         }
+//       } else {
+//         print('Failed with status code: ${response.statusCode}');
+//         return false;
+//       }
+//     } catch (e) {
+//       print('Error sending OTP: $e');
+//       return false;
+//     }
+//   }
+//
+//
+//   String generateOtp() {
+//     // Create a random number generator
+//     var random = Random();
+//
+//     // Generate a 4-digit OTP (range from 1000 to 9999)
+//     int otp = 1000 + random.nextInt(9000);  // Ensures a 4-digit number
+//
+//     // Return the OTP as a string
+//     return otp.toString();
+//   }
+//
+//
+//   void _sendOtpToUser(String phno,String otp) async {
+//
+//     bool otpSent = await sendOtp(phno,otp);
+//
+//     if (otpSent) {
+//       // Notify user that the OTP has been sent
+//       print('OTP sent successfully to $phno');
+//     } else {
+//       // Handle the error scenario
+//       print('Failed to send OTP');
+//     }
+//   }
+//
+//
+//   void _verifyOtp() {
+//     if (otpController.text == generatedotp) {
+//       // OTP verification successful
+//       print('OTP verified successfully!');
+//       // Navigate to the next screen or perform further actions
+//     } else {
+//       // OTP verification failed
+//       print('Invalid OTP entered!');
+//       // Show error or prompt user to try again
+//     }
+//   }
+//
+//   // Method to fetch the pin based on phone number
+//   Future<void> fetchAndNavigate() async {
+//     final data = await _databaseService.findDocumentByPhoneNum(
+//         'users', phoneController.text);
+//     pinstore = data?['pin'];
+//
+//     if (pinstore == '0') {
+//       Navigator.push(
+//           context, MaterialPageRoute(builder: (context) => SetPinScreen()));
+//     } else {
+//       Navigator.push(
+//           context, MaterialPageRoute(builder: (context) => PinEntryScreen()));
+//     }
+//   }
+//
+//   @override
+//   Widget build(BuildContext context) {
+//     return Scaffold(
+//       backgroundColor: Colors.white,
+//       body: SingleChildScrollView(
+//         child: Padding(
+//           padding: const EdgeInsets.symmetric(horizontal: 20.0),
+//           child: Form(
+//             key: _formKey,
+//             child: Column(
+//               mainAxisAlignment: MainAxisAlignment.center,
+//               crossAxisAlignment: CrossAxisAlignment.start,
+//               children: [
+//                 SizedBox(height: 80),
+//                 Center(
+//                   child: Image.asset(
+//                     'assets/img/hello.png',
+//                     height: 300,
+//                   ),
+//                 ),
+//                 SizedBox(height: 30),
+//                 Column(
+//                   crossAxisAlignment: CrossAxisAlignment.start,
+//                   children: [
+//                     Text(
+//                       isOtpFieldVisible ? 'Enter OTP' : 'Login',
+//                       style: TextStyle(
+//                         fontSize: 30,
+//                         fontWeight: FontWeight.bold,
+//                         color: Colors.black,
+//                       ),
+//                     ),
+//                     SizedBox(height: 10),
+//                     if (!isOtpFieldVisible)
+//                       Text(
+//                         'Enter your phone number and you will receive an OTP to get started!',
+//                         style: TextStyle(
+//                           fontSize: 14,
+//                           color: Colors.grey[600],
+//                         ),
+//                       ),
+//                     if (isOtpFieldVisible)
+//                       Row(
+//                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
+//                         children: [
+//                           Expanded(
+//                             child: Text(
+//                               'A 6 digit code has been sent to \n +91 ${phoneController.text}',
+//                               style: TextStyle(
+//                                 fontSize: 14,
+//                                 color: Colors.grey[600],
+//                               ),
+//                             ),
+//                           ),
+//                           GestureDetector(
+//                             onTap: () {
+//                               setState(() {
+//                                 isOtpFieldVisible = false;
+//                                 phoneController.clear();
+//                               });
+//                             },
+//                             child: Icon(Icons.edit,
+//                                 color: const Color.fromARGB(255, 5, 90, 237)),
+//                           ),
+//                         ],
+//                       ),
+//                     SizedBox(height: 30),
+//                     if (!isOtpFieldVisible) _buildPhoneNumberField(),
+//                     SizedBox(height: 5),
+//                     if (isOtpFieldVisible) _buildOTPField(),
+//                   ],
+//                 ),
+//                 SizedBox(height: 5),
+//                 _buildActionButton(),
+//               ],
+//             ),
+//           ),
+//         ),
+//       ),
+//     );
+//   }
+//
+//   Widget _buildPhoneNumberField() {
+//     return TextFormField(
+//       controller: phoneController,
+//       keyboardType: TextInputType.phone,
+//       style: TextStyle(fontSize: 14),
+//       inputFormatters: [
+//         LengthLimitingTextInputFormatter(10),
+//         FilteringTextInputFormatter.digitsOnly,
+//       ],
+//       decoration: InputDecoration(
+//         prefixText: '+91  ',
+//         prefixStyle: TextStyle(color: Colors.black, fontSize: 14),
+//         hintText: 'Phone Number',
+//         hintStyle: TextStyle(
+//           color: Colors.grey[500],
+//           fontSize: 14,
+//         ),
+//         filled: true,
+//         fillColor: Colors.grey[100],
+//         prefixIcon: Icon(
+//           Icons.phone,
+//           color: Colors.black,
+//           size: 18,
+//         ),
+//         border: OutlineInputBorder(
+//           borderRadius: BorderRadius.circular(10),
+//           borderSide: BorderSide.none,
+//         ),
+//         contentPadding: EdgeInsets.symmetric(vertical: 18, horizontal: 20),
+//       ),
+//       validator: (value) {
+//         if (value == null || value.isEmpty) {
+//           return 'Please enter your phone number';
+//         } else if (value.length != 10) {
+//           return 'Phone number must be exactly 10 digits';
+//         }
+//         return null;
+//       },
+//     );
+//   }
+//
+//   Widget _buildOTPField() {
+//     return TextFormField(
+//       controller: otpController,
+//       keyboardType: TextInputType.number,
+//       inputFormatters: [
+//         LengthLimitingTextInputFormatter(4),
+//         FilteringTextInputFormatter.digitsOnly,
+//       ],
+//       style: TextStyle(fontSize: 14),
+//       decoration: InputDecoration(
+//         hintText: 'OTP',
+//         hintStyle: TextStyle(
+//           color: Colors.grey[500],
+//           fontSize: 14,
+//         ),
+//         filled: true,
+//         fillColor: Colors.grey[100],
+//         prefixIcon: Icon(
+//           Icons.lock,
+//           color: Colors.black,
+//           size: 18,
+//         ),
+//         border: OutlineInputBorder(
+//           borderRadius: BorderRadius.circular(10),
+//           borderSide: BorderSide.none,
+//         ),
+//         contentPadding: EdgeInsets.symmetric(vertical: 18, horizontal: 20),
+//       ),
+//       validator: (value) {
+//         if (value == null || value.isEmpty) {
+//           return 'Please enter the OTP';
+//         } else if (value.length != 4) {
+//           return 'OTP must be exactly 4 digits';
+//         }
+//         return null;
+//       },
+//     );
+//   }
+//
+//   Widget _buildActionButton() {
+//     return SizedBox(
+//       width: double.infinity,
+//       child: ElevatedButton(
+//         onPressed: () async {
+//           if (_formKey.currentState!.validate()) {
+//             if (!isOtpFieldVisible) {
+//               // Logic to send OTP
+//
+//               String otp = generateOtp();
+//               generatedotp = otp;
+//               print('Your OTP is: $otp');
+//
+//               String phoneno = phoneController.text;
+//               print(phoneno);
+//
+//               _sendOtpToUser(phoneno, otp);
+//
+//
+//               setState(() {
+//                 isOtpFieldVisible = true;
+//               });
+//             } else {
+//
+//              _verifyOtp();
+//               await fetchAndNavigate();
+//             }
+//           }
+//         },
+//         style: ElevatedButton.styleFrom(
+//           foregroundColor: Colors.white,
+//           backgroundColor: const Color.fromARGB(255, 5, 90, 237),
+//           padding: EdgeInsets.symmetric(vertical: 14),
+//           shape: RoundedRectangleBorder(
+//             borderRadius: BorderRadius.circular(10),
+//           ),
+//         ),
+//         child: Text(
+//           isOtpFieldVisible ? 'Verify OTP' : 'Send OTP',
+//           style: TextStyle(
+//             fontSize: 14,
+//             fontWeight: FontWeight.w500,
+//           ),
+//         ),
+//       ),
+//     );
+//   }
+// }
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+// class PinEntryScreen extends StatelessWidget {
+//   @override
+//   Widget build(BuildContext context) {
+//     return Scaffold(
+//       appBar: AppBar(
+//         title: Text('Enter PIN'),
+//       ),
+//       body: Center(
+//         child: Text('Enter your PIN here'),
+//       ),
+//     );
+//   }
+// }

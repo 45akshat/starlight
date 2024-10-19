@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:cloud_firestore/cloud_firestore.dart'; // Firestore import
 import 'HomePage.dart';
+import 'kidsParentsOptionScreen.dart';
+import 'main.dart';
 import 'services/database.dart';
+import 'login.dart';
 
 class SetPinScreen extends StatefulWidget {
   @override
@@ -10,15 +13,14 @@ class SetPinScreen extends StatefulWidget {
 }
 
 class _SetPinScreenState extends State<SetPinScreen> {
-  String phonenumber = '9022559233';
   final DatabaseService _databaseService = DatabaseService();
   TextEditingController _pinController = TextEditingController();
 
   Future<void> funcc() async {
     try {
-      final data = await _databaseService.findDocumentByPhoneNum('users', phonenumber);
+      final data = await _databaseService.findDocumentByPhoneNum('users', phoneNumber);
       if (data != null) {
-        DocumentReference docRef = FirebaseFirestore.instance.collection('users').doc(data[phonenumber]);
+        DocumentReference docRef = FirebaseFirestore.instance.collection('users').doc(data[phoneNumber]);
         await docRef.update({'pin': _pinController.text});
 
         print('PIN updated successfully');
@@ -30,10 +32,17 @@ class _SetPinScreenState extends State<SetPinScreen> {
     }
   }
 
+
+  void getStoredPhoneNumber() async {
+    phoneNumber = await secureStorage.read(key: 'phone_number')??'';
+  }
+
+
   @override
   void initState() {
+    getStoredPhoneNumber();
+
     super.initState();
-    //funcc();
   }
 
   void _submitPin() {
@@ -41,7 +50,7 @@ class _SetPinScreenState extends State<SetPinScreen> {
       funcc();
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (context) => homepage()),
+        MaterialPageRoute(builder: (context) =>KidsParentsOption()),
       );
     } else {
       print('Please enter a valid 4-digit PIN');

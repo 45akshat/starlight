@@ -1,38 +1,52 @@
 import 'package:flutter/material.dart';
+import 'package:starlight/AccountSettings.dart';
+import 'package:starlight/CategoryPage.dart';
 import 'package:starlight/FrontScreen.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:starlight/KidsFrontScreen.dart';
 
-class homepage extends StatelessWidget {
-  const homepage({super.key});
 
-  @override
-  Widget build(BuildContext context) {
-    return const MaterialApp(home: NavigationExample());
-  }
-}
 
 class NavigationExample extends StatefulWidget {
-  const NavigationExample({super.key});
+   NavigationExample({super.key,required this.kidOrParent});
+  String kidOrParent;
+
 
   @override
   State<NavigationExample> createState() => _NavigationExampleState();
 }
 
 class _NavigationExampleState extends State<NavigationExample> {
-  int currentPageIndex = 0;
 
-  List navigationwidgets = <Widget>[
-    FirstScreen(),
-    Container(
-      color: Colors.yellowAccent,
-      alignment: Alignment.center,
-      child: const Text('Page 2'),
-    ),
-    Container(
-      color: Colors.blue,
-      alignment: Alignment.center,
-      child: const Text('Page 3'),
-    ),
-  ];
+
+  int currentPageIndex = 0;
+  Color kidorparentcolor = Colors.blueAccent;
+
+  List<Widget> navigationwidgets = [];
+
+  @override
+  void initState() {
+    super.initState();
+    // Initialize the list based on 'kidOrParent'
+    if (widget.kidOrParent == 'kid') {
+      kidorparentcolor =  Colors.deepOrangeAccent;
+      navigationwidgets = [
+        KidsScreen(),
+        CategoryPage(text: 'Most Watched'),
+        AccountSettingsScreen()
+        // Add other widgets specific to 'kid'
+      ];
+    } else {
+      kidorparentcolor =  Colors.blueAccent;
+      navigationwidgets = [
+       FirstScreen(),
+        CategoryPage(text: 'Most Watched'),
+        AccountSettingsScreen()
+        // Add other widgets specific to 'parent'
+      ];
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -45,7 +59,7 @@ class _NavigationExampleState extends State<NavigationExample> {
         },
 
         backgroundColor: Colors.black87,
-        indicatorColor: Colors.blueAccent,
+        indicatorColor: kidorparentcolor,
         selectedIndex: currentPageIndex,
         destinations: const <Widget>[
           NavigationDestination(

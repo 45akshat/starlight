@@ -17,11 +17,13 @@ class FirstScreen extends StatefulWidget {
 class _FirstScreenState extends State<FirstScreen> {
   String selectedCategory = 'Most Watched'; // Default selected category
 
-  Future<List<Map<String, dynamic>>> _fetchShowsFromFirestore() async {
+
+
+  Future<List<Map<String, dynamic>>> _fetchShowsFromFirestore(String docname ) async {
     final DocumentSnapshot<Map<String, dynamic>> snapshot =
     await FirebaseFirestore.instance
         .collection('HomePage')
-        .doc('AllShows')
+        .doc(docname)
         .get();
 
     if (snapshot.exists && snapshot.data() != null) {
@@ -42,6 +44,15 @@ class _FirstScreenState extends State<FirstScreen> {
         }
       ];
     }
+  }
+
+  Future<List<List<Map<String, dynamic>>>> _fetchBothCollections() async {
+
+    return await Future.wait([
+      _fetchShowsFromFirestore('AllShows'),
+      _fetchShowsFromFirestore('HeroCarousel'),
+
+    ]);
   }
 
   @override
@@ -72,8 +83,8 @@ class _FirstScreenState extends State<FirstScreen> {
         ),
         centerTitle: false,
       ),
-      body: FutureBuilder<List<Map<String, dynamic>>>(
-        future: _fetchShowsFromFirestore(),
+      body: FutureBuilder<List<List<Map<String, dynamic>>>>(
+        future: _fetchBothCollections(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(
@@ -89,7 +100,10 @@ class _FirstScreenState extends State<FirstScreen> {
                       style: TextStyle(color: Colors.white)));
             }
 
-            final shows = snapshot.data!;
+            final List<Map<String, dynamic>> showsFromFirestore = snapshot.data![0];
+            final List<Map<String, dynamic>> heroCarouselShows = snapshot.data![1];
+
+
 
             return Stack(children: [
               SingleChildScrollView(
@@ -100,7 +114,7 @@ class _FirstScreenState extends State<FirstScreen> {
                     children: [
                       CustomCarouselSlider(
                         aspectRatio: 0.7,
-                        imgList: shows
+                        imgList: heroCarouselShows
                             .map((show) =>
                         {
                           "image_url": show["img_link"],
@@ -112,34 +126,13 @@ class _FirstScreenState extends State<FirstScreen> {
 
                       const SizedBox(height: 30),
 
-                      // _buildCategoryButtons(),
-                      // const SizedBox(height: 2),
-                      // Padding(
-                      //   padding: const EdgeInsets.all(5.0),
-                      //   child: Text(
-                      //     '$selectedCategory Shows',
-                      //     style: const TextStyle(fontSize: 25, color: Colors.white),
-                      //   ),
-                      // ),
-                      // _buildHorizontalListView(shows),
-
-                      // ElevatedButton(
-                      //     onPressed: () {
-                      //       Navigator.push(
-                      //         context,
-                      //         MaterialPageRoute(
-                      //             builder: (context) => CategoryPage()),
-                      //       );
-                      //     },
-                      //     child: Text('Categories')),
-
                       const Padding(
                         padding: EdgeInsets.all(15.0),
                         child: Text('Continue Watching',
                             style:
                             TextStyle(fontSize: 25, color: Colors.white)),
                       ),
-                      _buildHorizontalListView(shows.sublist(0, 3)),
+                      _buildHorizontalListView(showsFromFirestore.sublist(0, 3)),
 
                       const SizedBox(height: 30),
 
@@ -165,7 +158,7 @@ class _FirstScreenState extends State<FirstScreen> {
                           ],
                         ),
                       ),
-                      _buildHorizontalListView(shows),
+                      _buildHorizontalListView(showsFromFirestore),
 
                       const SizedBox(height: 30),
 
@@ -176,7 +169,7 @@ class _FirstScreenState extends State<FirstScreen> {
                             style:
                             TextStyle(fontSize: 25, color: Colors.white)),
                       ),
-                      AllShowsListView(shows),
+                      AllShowsListView(showsFromFirestore),
                     ],
                   ),
                 ),
@@ -275,7 +268,7 @@ class _FirstScreenState extends State<FirstScreen> {
                 context,
                 MaterialPageRoute(
                   builder: (context) =>
-                      ShowDetailScreen(showId: movie["stream_id"]),
+                      ShowDetailScreen(showId: movie["stream_id"], title: movie["title"]),
                 ),
               );
             },
@@ -317,7 +310,7 @@ class _FirstScreenState extends State<FirstScreen> {
                 context,
                 MaterialPageRoute(
                   builder: (context) =>
-                      ShowDetailScreen(showId: movie["stream_id"]),
+                      ShowDetailScreen(showId: movie["stream_id"], title: movie["title"],),
                 ),
               );
             },

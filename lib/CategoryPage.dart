@@ -6,7 +6,6 @@ import 'package:starlight/FrontScreen.dart';
 class CategoryPage extends StatefulWidget {
   final String text;
 
-  // Proper constructor with key and super
   const CategoryPage({Key? key, required this.text}) : super(key: key);
 
   @override
@@ -15,7 +14,6 @@ class CategoryPage extends StatefulWidget {
 
 
 class _CategoryPageState extends State<CategoryPage> {
-
 
   late String selectedCategory;
 
@@ -34,6 +32,10 @@ class _CategoryPageState extends State<CategoryPage> {
       List<Map<String, dynamic>> shows = dynamicShows.map((show) {
         return Map<String, dynamic>.from(show);
       }).toList();
+
+      shows.sort((a, b) => (a['ranking'] ?? 0).compareTo(b['ranking'] ?? 0));
+
+
       return shows;
     } else {
       return [{
@@ -51,11 +53,10 @@ class _CategoryPageState extends State<CategoryPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        color: Color(0xff17181C),
+        color: const Color(0xff17181C),
         child: Center(
           child: Column(
             children: [
-
               const SizedBox(height: 30),
               Padding(
                 padding: const EdgeInsets.all(5.0),
@@ -70,16 +71,14 @@ class _CategoryPageState extends State<CategoryPage> {
                   future: _fetchShowsFromFirestore(),
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
-                      return SizedBox(
+                      return const SizedBox(
                         height: 30,
-                        child: CircularProgressIndicator(
-
-                        ),
+                        child: CircularProgressIndicator(),
                       );
                     } else if (snapshot.hasError) {
-                      return Text('Error loading shows');
+                      return const Text('Error loading shows');
                     } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                      return Text('No shows available');
+                      return const Text('No shows available');
                     }
                     return _buildGridView(snapshot.data!);
                   },
@@ -101,9 +100,9 @@ class _CategoryPageState extends State<CategoryPage> {
           scrollDirection: Axis.horizontal,
           children: [
             _buildCategoryButton('Most Watched'),
-            SizedBox(width: 10),
+            const SizedBox(width: 10),
             _buildCategoryButton('Recently Added'),
-            SizedBox(width: 10),
+            const SizedBox(width: 10),
             _buildCategoryButton('Best Rated'),
           ],
         ),
@@ -136,7 +135,7 @@ class _CategoryPageState extends State<CategoryPage> {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 10.0),
       child: GridView.builder(
-        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: 2,
           crossAxisSpacing: 10.0,
           mainAxisSpacing: 10.0,
@@ -154,18 +153,6 @@ class _CategoryPageState extends State<CategoryPage> {
                   movie["img_link"] ?? '',
                   fit: BoxFit.cover,
                 ),
-                // Positioned(
-                //   bottom: 10.0,
-                //   left: 10.0,
-                //   child: Text(
-                //     movie["title"] ?? '',
-                //     style: TextStyle(
-                //       color: Colors.white,
-                //       fontSize: 16.0,
-                //       fontWeight: FontWeight.bold,
-                //     ),
-                //   ),
-                // ),
               ],
             ),
           );
